@@ -28,6 +28,20 @@ Promise.myAll = (promises) => {
   });
 };
 
+Promise.myRace = (promises) => {
+  return new Promise((resolve, reject) => {
+    if (promises.length === 0) return resolve([]);
+
+    promises.forEach((p, i) => {
+      Promise.resolve(p)
+        .then((res) => {
+          resolve(res);
+        })
+        .catch(reject);
+    });
+  });
+};
+
 // 测试一下
 const p1 = Promise.resolve(1);
 const p2 = new Promise((resolve) => {
