@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>name+iframe跨域</title>
+</head>
+
+<body>
+    <script type="text/javascript">
+        function proxy(url, callback) {
+            let state = 0;
+            let iframe = document.createElement('iframe');
+
+            // 设置处理
+            iframe.onload = function () {
+                if (state === 0) {
+                    // 当前加载跨域页
+                    // 由于是简单请求，不会被Block
+                    // 获得name之后转回代理页
+                    // 并更新state
+                    iframe.contentWindow.src = "domain.com/proxy"
+                    state = 1;
+                } else if (state === 1) {
+                    // 当前加载代理页
+                    // 从跨域页的name获得数据
+                    // 并销毁iframe，防止数据泄露
+                    callback(iframe.contentWindow.name);
+                    document.body.removeChild(iframe);
+                }
+            }
+
+            // 加载跨域页面
+            iframe.src = url;
+            document.body.appendChild(iframe)
+        }
+
+        // 使用
+        proxy("cors.html", console.log)
+        // cors.html⬇️
+        // < script >
+        //    window.name = 'This is domain2 data!';
+        // </script>
+
+
+    </script>
+</body>
+
+</html>
