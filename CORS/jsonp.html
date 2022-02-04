@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script type="text/javascript">
+        let script = document.createElement("script");
+        script.src = "http://localhost:8010?callback=handleCallback";
+        document.body.appendChild(script);
+
+        // 返回,类似setTimeout
+        // handleCallback(data)
+
+        // 定义好函数
+        function handleCallback(data) {
+            console.log(JSON.parse(data));
+        }
+    </script>
+
+</body>
+
+</html>

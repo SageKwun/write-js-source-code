@@ -1,6 +1,6 @@
 const http = require("http");
-
 const server = http.createServer();
+const URL = "http://localhost:8010/";
 
 // server.on("request", (req, res) => {
 //   if (req.url === "/") {
@@ -17,21 +17,42 @@ const server = http.createServer();
 //     }, 2000);
 //   }
 // });
-const URL = "http://localhost:8010/";
 
-server.on("request", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Allow-Credentials", true);
-  res.setHeader("Access-Control-Expose-Headers", "X-Requested-With");
-  res.setHeader("Access-Control-Max-Age", 10);
+// server.on("request", (req, res) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader("Access-Control-Allow-Methods", "POST");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+//   res.setHeader("Access-Control-Allow-Credentials", true);
+//   res.setHeader("Access-Control-Expose-Headers", "X-Requested-With");
+//   res.setHeader("Access-Control-Max-Age", 10);
 
-  console.log(req.headers["content-type"]);
+//   console.log(req.headers["content-type"]);
 
-  res.write("end");
-  res.end();
-});
+//   res.write("end");
+//   res.end();
+// });
+
+// server.on("request", (req, res) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader("Access-Control-Allow-Methods", "POST");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+//   res.setHeader("Access-Control-Allow-Credentials", true);
+//   res.setHeader("Access-Control-Expose-Headers", "X-Requested-With");
+//   res.setHeader("Access-Control-Max-Age", 10);
+
+//   console.log(req.headers["content-type"]);
+
+//   res.write("end");
+//   res.end();
+// });
+
+// ----------------------------------------------------------------JSONP
+// server.on("request", (req, res) => {
+//   res.write(
+//     "handleCallback(JSON.stringify({msg:'jsonp successful', data:{name:'admin'}}))"
+//   );
+//   res.end();
+// });
 
 server.listen(8010, () => {
   console.log("成功启动");

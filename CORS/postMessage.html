@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>postMessage</title>
+</head>
+
+<body>
+
+    <script>
+        function postMessageCORS(url, data, callback) {
+            let iframe = document.createElement('iframe');
+            iframe.onload = function () {
+                iframe.contentWindow.postMessage(JSON.stringify(data), url.split("/").slice(0, 3).join("/"));
+            }
+            iframe.src = url;
+
+            window.addEventListener("message", callback);
+
+            document.body.appendChild(iframe);
+        }
+        postMessageCORS("http://localhost:52330/CORS/postMsgHelper.html", { name: 1 }, (e) => {
+            console.log("get message from iframe");
+            console.log("data: ", JSON.parse(e.data));
+        })
+    </script>
+</body>
+
+</html>

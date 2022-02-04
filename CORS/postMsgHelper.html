@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script type="text/javascript">
+        window.addEventListener("message", (e) => {
+            let data = JSON.parse(e.data);
+            console.log(window.self)
+            window.self.console.log("get data from parent window")
+            data.name = 2;
+            setTimeout(() => {
+                window.parent.postMessage(JSON.stringify(data), window.parent)
+            }, 1000)
+
+        })
+    </script>
+
+</body>
+
+</html>
