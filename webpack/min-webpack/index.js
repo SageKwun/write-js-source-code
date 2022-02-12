@@ -3,6 +3,7 @@ import * as parser from "@babel/parser";
 import traverse from "@babel/traverse";
 import path, { relative } from "path";
 import ejs from "ejs";
+import { transformFromAst } from "babel-core";
 
 function createAssert(filePath) {
   // 获取内容
@@ -23,8 +24,12 @@ function createAssert(filePath) {
   });
   // console.log("deps: ", deps);
 
+  const { code } = transformFromAst(ast, null, {
+    presets: ["env"],
+  });
+
   return {
-    source,
+    code,
     deps,
     filePath,
   };
@@ -38,7 +43,6 @@ function createAssert(filePath) {
 function createGraph(filePath) {
   const mainAssert = createAssert(filePath);
   const queue = [mainAssert];
-  map.set(filePath, mainAssert);
 
   for (const asset of queue) {
     asset.deps.forEach((relativePath) => {
@@ -52,4 +56,18 @@ function createGraph(filePath) {
 }
 
 const graph = createGraph("./example/main.js");
-console.log(graph);
+
+function build(graph) {
+  const template = fs.readFileSync("./bundle.ejs", { encoding: "utf-8" });
+  const data = graph.map((asset) => {
+    return {
+      filePath: asset.filePath,
+      code: asset.code,
+    };
+  });
+  const code = ejs.render(template, { data });
+  console.log(code);
+  fs.writeFileSync("./dist/bundle.js", code);
+}
+
+build(graph);
