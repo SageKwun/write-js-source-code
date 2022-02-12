@@ -1,10 +1,11 @@
 import fs from "fs";
 import * as parser from "@babel/parser";
 import traverse from "@babel/traverse";
+import path, { relative } from "path";
 
-function createAssert() {
+function createAssert(filePath) {
   // 获取内容
-  const source = fs.readFileSync("./example/main.js", { encoding: "utf8" });
+  const source = fs.readFileSync(filePath, { encoding: "utf8" });
   // console.log("source: " + source);
 
   // 获取AST
@@ -24,7 +25,32 @@ function createAssert() {
   return {
     source,
     deps,
+    filePath,
   };
 }
 
-createAssert();
+/**
+ * @description 广度优先遍历依赖
+ * @param {string} filePath
+ * @returns {Array}
+ */
+function createGraph(filePath) {
+  const map = new Map();
+  const mainAssert = createAssert(filePath);
+  const queue = [mainAssert];
+  map.set(filePath, mainAssert);
+
+  for (const asset of queue) {
+    asset.deps.forEach((relativePath) => {
+      const childPath = path.resolve("./example", relativePath);
+      if (map.has(childPath)) return;
+      const child = createAssert(childPath);
+      map.set(childPath, child);
+      queue.push(child);
+    });
+  }
+  return queue;
+}
+
+const graph = createGraph("./example/main.js");
+console.log(graph);
