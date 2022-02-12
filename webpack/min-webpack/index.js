@@ -2,6 +2,7 @@ import fs from "fs";
 import * as parser from "@babel/parser";
 import traverse from "@babel/traverse";
 import path, { relative } from "path";
+import ejs from "ejs";
 
 function createAssert(filePath) {
   // 获取内容
@@ -35,7 +36,6 @@ function createAssert(filePath) {
  * @returns {Array}
  */
 function createGraph(filePath) {
-  const map = new Map();
   const mainAssert = createAssert(filePath);
   const queue = [mainAssert];
   map.set(filePath, mainAssert);
@@ -43,9 +43,8 @@ function createGraph(filePath) {
   for (const asset of queue) {
     asset.deps.forEach((relativePath) => {
       const childPath = path.resolve("./example", relativePath);
-      if (map.has(childPath)) return;
+      if (queue.includes(childPath)) return;
       const child = createAssert(childPath);
-      map.set(childPath, child);
       queue.push(child);
     });
   }
