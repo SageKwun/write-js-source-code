@@ -5,6 +5,8 @@ import path, { relative } from "path";
 import ejs from "ejs";
 import { transformFromAst } from "babel-core";
 
+let id = 0;
+
 function createAssert(filePath) {
   // 获取内容
   const source = fs.readFileSync(filePath, { encoding: "utf8" });
@@ -29,9 +31,11 @@ function createAssert(filePath) {
   });
 
   return {
+    id: id++,
     code,
     deps,
     filePath,
+    mapping: {},
   };
 }
 
@@ -49,25 +53,23 @@ function createGraph(filePath) {
       const childPath = path.resolve("./example", relativePath);
       if (queue.includes(childPath)) return;
       const child = createAssert(childPath);
+      asset.mapping[relativePath] = child.id;
       queue.push(child);
     });
   }
   return queue;
 }
 
-const graph = createGraph("./example/main.js");
-
 function build(graph) {
   const template = fs.readFileSync("./bundle.ejs", { encoding: "utf-8" });
   const data = graph.map((asset) => {
-    return {
-      filePath: asset.filePath,
-      code: asset.code,
-    };
+    return { code: asset.code, id: asset.id, mapping: asset.mapping };
   });
+  console.log(data);
   const code = ejs.render(template, { data });
-  console.log(code);
   fs.writeFileSync("./dist/bundle.js", code);
 }
 
+const graph = createGraph("./example/main.js");
+// console.log(graph);
 build(graph);
