@@ -24,15 +24,20 @@ function createAssert(filePath) {
   let source = fs.readFileSync(filePath, { encoding: "utf8" });
   // console.log("source: " + source);
 
+  const ruleContext = {
+    addDeps(dep) {
+      console.log("deps: ", dep);
+    },
+  };
   const rules = webpackConfig.module.rules;
   rules.forEach((rule) => {
     if (rule.test.test(filePath)) {
       const loaders = rule.use;
       if (typeof loaders === "function") {
-        source = rule.use(source);
+        source = rule.use.call(ruleContext, source);
       } else if (Array.isArray(rule.use)) {
         loaders.reverse().forEach((loader) => {
-          source = loader(source);
+          source = loader.call(ruleContext, source);
         });
       } else {
         throw new Error("use should be a function or an Array of function");
