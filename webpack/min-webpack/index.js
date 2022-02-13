@@ -4,13 +4,41 @@ import traverse from "@babel/traverse";
 import path, { relative } from "path";
 import ejs from "ejs";
 import { transformFromAst } from "babel-core";
+import { jsonLoader } from "./loaders/jsonLoader.js";
 
 let id = 0;
 
+const webpackConfig = {
+  module: {
+    rules: [
+      {
+        test: /\.json$/,
+        use: [jsonLoader],
+      },
+    ],
+  },
+};
+
 function createAssert(filePath) {
   // 获取内容
-  const source = fs.readFileSync(filePath, { encoding: "utf8" });
+  let source = fs.readFileSync(filePath, { encoding: "utf8" });
   // console.log("source: " + source);
+
+  const rules = webpackConfig.module.rules;
+  rules.forEach((rule) => {
+    if (rule.test.test(filePath)) {
+      const loaders = rule.use;
+      if (typeof loaders === "function") {
+        source = rule.use(source);
+      } else if (Array.isArray(rule.use)) {
+        loaders.reverse().forEach((loader) => {
+          source = loader(source);
+        });
+      } else {
+        throw new Error("use should be a function or an Array of function");
+      }
+    }
+  });
 
   // 获取AST
   const ast = parser.parse(source, { sourceType: "module" });
