@@ -4,17 +4,32 @@ function debounce(fn, delay) {
   let timer = null;
 
   // 将debounce处理结果当作函数返回
-  return function () {
-    // 保留调用时的this上下文
-    let _this = this;
-    // 保留调用时传入的参数
-    let _arguments = arguments;
-
+  return (...args) => {
     // 每次事件被触发时，都去清除之前的旧定时器
     if (timer) clearTimeout(timer);
     // 设立新定时器
-    timer = setTimeout(function () {
-      fn.apply(_this, _arguments);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
     }, delay);
+  };
+}
+
+function debounce(fn, delay, isImmediate) {
+  let timer;
+  let result;
+  return (...args) => {
+    if (timer) clearTimeout(timer);
+    if (isImmediate) {
+      let callNow = !timer;
+      setTimeout(() => {
+        timer = null;
+      }, delay);
+      if (callNow) result = fn.apply(this, args);
+    } else {
+      setTimeout(() => {
+        result = fn.apply(this, args);
+      }, delay);
+    }
+    return result;
   };
 }
