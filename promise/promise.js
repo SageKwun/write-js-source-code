@@ -1,4 +1,4 @@
-// MyPromise.js
+// 代码在 https://github.com/T-Roc/my-promise/blob/main/my-promise.js 的基础上略加修改
 
 // 先定义三个常量表示状态
 const PENDING = "pending";
@@ -8,6 +8,21 @@ const REJECTED = "rejected";
 // 新建 MyPromise 类
 class MyPromise {
   constructor(executor) {
+    // 储存状态的变量，初始值是 pending
+    this.status = PENDING;
+
+    // resolve和reject为什么要用箭头函数？
+    // 如果直接调用的话，普通函数this指向的是window或者undefined
+    // 用箭头函数就可以让this指向当前实例对象
+    // 成功之后的值
+    this.value = null;
+    // 失败之后的原因
+    this.reason = null;
+
+    // 存储成功回调函数
+    this.onFulfilledCallbacks = [];
+    // 存储失败回调函数
+    this.onRejectedCallbacks = [];
     // executor 是一个执行器，进入会立即执行
     // 并传入resolve和reject方法
     try {
@@ -16,18 +31,6 @@ class MyPromise {
       this.reject(error);
     }
   }
-
-  // 储存状态的变量，初始值是 pending
-  status = PENDING;
-  // 成功之后的值
-  value = null;
-  // 失败之后的原因
-  reason = null;
-
-  // 存储成功回调函数
-  onFulfilledCallbacks = [];
-  // 存储失败回调函数
-  onRejectedCallbacks = [];
 
   // 更改成功后的状态
   resolve = (value) => {
@@ -116,6 +119,26 @@ class MyPromise {
     return promise2;
   }
 
+  catch(onRejected) {
+    // 只需要进行错误处理
+    this.then(undefined, onRejected);
+  }
+
+  finally(fn) {
+    return this.then(
+      (value) => {
+        return MyPromise.resolve(fn()).then(() => {
+          return value;
+        });
+      },
+      (error) => {
+        return MyPromise.resolve(fn()).then(() => {
+          throw error;
+        });
+      }
+    );
+  }
+
   // resolve 静态方法
   static resolve(parameter) {
     // 如果传入 MyPromise 就直接返回
@@ -135,48 +158,169 @@ class MyPromise {
       reject(reason);
     });
   }
+
+  static all(promiseList) {
+    return new MyPromise((resolve, reject) => {
+      const result = [];
+      const length = promiseList.length;
+      let count = 0;
+
+      if (length === 0) {
+        return resolve(result);
+      }
+
+      promiseList.forEach((promise, index) => {
+        MyPromise.resolve(promise).then(
+          (value) => {
+            count++;
+            result[index] = value;
+            if (count === length) {
+              resolve(result);
+            }
+          },
+          (reason) => {
+            reject(reason);
+          }
+        );
+      });
+    });
+  }
+
+  static allSettled = (promiseList) => {
+    return new MyPromise((resolve) => {
+      const length = promiseList.length;
+      const result = [];
+      let count = 0;
+
+      if (length === 0) {
+        return resolve(result);
+      } else {
+        for (let i = 0; i < length; i++) {
+          const currentPromise = MyPromise.resolve(promiseList[i]);
+          currentPromise.then(
+            (value) => {
+              count++;
+              result[i] = {
+                status: "fulfilled",
+                value: value,
+              };
+              if (count === length) {
+                return resolve(result);
+              }
+            },
+            (reason) => {
+              count++;
+              result[i] = {
+                status: "rejected",
+                reason: reason,
+              };
+              if (count === length) {
+                return resolve(result);
+              }
+            }
+          );
+        }
+      }
+    });
+  };
+
+  static race(promiseList) {
+    return new MyPromise((resolve, reject) => {
+      const length = promiseList.length;
+
+      if (length === 0) {
+        return resolve();
+      } else {
+        for (let i = 0; i < length; i++) {
+          MyPromise.resolve(promiseList[i]).then(
+            (value) => {
+              return resolve(value);
+            },
+            (reason) => {
+              return reject(reason);
+            }
+          );
+        }
+      }
+    });
+  }
 }
 
-function resolvePromise(promise2, x, resolve, reject) {
-  // 如果相等了，说明return的是自己，抛出类型错误并返回
-  if (promise2 === x) {
+function resolvePromise(promise, x, resolve, reject) {
+  // 如果 promise 和 x 指向同一对象，以 TypeError 为据因拒绝执行 promise
+  // 这是为了防止死循环
+  if (promise === x) {
     return reject(
-      new TypeError("Chaining cycle detected for promise #<Promise>")
+      new TypeError("The promise and the return value are the same")
     );
   }
-  // 判断x是不是 MyPromise 实例对象
-  if (x instanceof MyPromise) {
-    // 执行 x，调用 then 方法，目的是将其状态变为 fulfilled 或者 rejected
-    // x.then(value => resolve(value), reason => reject(reason))
-    // 简化之后
-    x.then(resolve, reject);
+
+  if (typeof x === "object" || typeof x === "function") {
+    // 这个坑是跑测试的时候发现的，如果x是null，应该直接resolve
+    if (x === null) {
+      return resolve(x);
+    }
+
+    let then;
+    try {
+      // 把 x.then 赋值给 then
+      then = x.then;
+    } catch (error) {
+      // 如果取 x.then 的值时抛出错误 e ，则以 e 为据因拒绝 promise
+      return reject(error);
+    }
+
+    // 如果 then 是函数
+    if (typeof then === "function") {
+      let called = false;
+      // 将 x 作为函数的作用域 this 调用之
+      // 传递两个回调函数作为参数，第一个参数叫做 resolvePromise ，第二个参数叫做 rejectPromise
+      // 名字重名了，我直接用匿名函数了
+      try {
+        then.call(
+          x,
+          // 如果 resolvePromise 以值 y 为参数被调用，则运行 [[Resolve]](promise, y)
+          (y) => {
+            // 如果 resolvePromise 和 rejectPromise 均被调用，
+            // 或者被同一参数调用了多次，则优先采用首次调用并忽略剩下的调用
+            // 实现这条需要前面加一个变量called
+            if (called) return;
+            called = true;
+            resolvePromise(promise, y, resolve, reject);
+          },
+          // 如果 rejectPromise 以据因 r 为参数被调用，则以据因 r 拒绝 promise
+          (r) => {
+            if (called) return;
+            called = true;
+            reject(r);
+          }
+        );
+      } catch (error) {
+        // 如果调用 then 方法抛出了异常 e：
+        // 如果 resolvePromise 或 rejectPromise 已经被调用，则忽略之
+        if (called) return;
+
+        // 否则以 e 为据因拒绝 promise
+        reject(error);
+      }
+    } else {
+      // 如果 then 不是函数，以 x 为参数执行 promise
+      resolve(x);
+    }
   } else {
-    // 普通值
+    // 如果 x 不为对象或者函数，以 x 为参数执行 promise
     resolve(x);
   }
 }
 
-new MyPromise((resolve, reject) => {
-  console.log("外部promise");
-  resolve();
-})
-  .then(() => {
-    console.log("外部第一个then");
-    new MyPromise((resolve, reject) => {
-      console.log("内部promise");
-      resolve();
-    })
-      .then(() => {
-        console.log("内部第一个then");
-        return MyPromise.resolve();
-      })
-      .then(() => {
-        console.log("内部第二个then");
-      });
-  })
-  .then(() => {
-    console.log("外部第二个then");
-  })
-  .then(() => {
-    console.log("外部第三个then");
+MyPromise.deferred = function () {
+  var result = {};
+  result.promise = new MyPromise(function (resolve, reject) {
+    result.resolve = resolve;
+    result.reject = reject;
   });
+
+  return result;
+};
+
+module.exports = MyPromise;
