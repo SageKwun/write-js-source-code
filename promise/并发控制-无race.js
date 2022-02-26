@@ -9,23 +9,32 @@ var request = (url) => {
   });
 };
 
-/**
- * @description 创建向url发送的请求任务，推入并发池，在请求完成后从并发池删除并推入新的请求任务
- * @param {string} url: 某个任务的url
- */
-function addTask(url) {
-  let task = request(url);
-  pool.push(task);
-  task.then((res) => {
-    //请求结束后将该Promise任务从并发池中移除
-    pool.splice(pool.indexOf(task), 1);
-    console.log(`${url} 结束，当前并发数：${pool.length}`);
-    url = urls.shift();
-    //每当并发池跑完一个任务，就再塞入一个任务
-    if (url !== undefined) {
-      addTask(url);
-    }
-  });
+function fn(requestFn = () => {}, max = 3, urls = []) {
+  /**
+   * @description 创建向url发送的请求任务，推入并发池，在请求完成后从并发池删除并推入新的请求任务
+   * @param {string} url: 某个任务的url
+   */
+  function addTask(url, requestFn) {
+    let task = requestFn(url);
+    pool.push(task);
+    task.then((res) => {
+      //请求结束后将该Promise任务从并发池中移除
+      pool.splice(pool.indexOf(task), 1);
+      console.log(`${url} 结束，当前并发数：${pool.length}`);
+      url = urls.shift();
+      //每当并发池跑完一个任务，就再塞入一个任务
+      if (url !== undefined) {
+        addTask(url, requestFn);
+      }
+    });
+  }
+
+  let pool = []; //并发池
+  //先循环把并发池塞满
+  while (pool.length <= max) {
+    let url = urls.shift();
+    addTask(url, requestFn);
+  }
 }
 
 let urls = [
@@ -37,10 +46,5 @@ let urls = [
   "hulu.com",
   "amazon.com",
 ]; // 请求地址
-let pool = []; //并发池
-let max = 3; //最大并发量
-//先循环把并发池塞满
-while (pool.length < max) {
-  let url = urls.shift();
-  addTask(url);
-}
+
+fn(request, 3, urls);

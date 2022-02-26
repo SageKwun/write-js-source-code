@@ -49,7 +49,7 @@ let urls = [
 let pool = []; //并发池
 let max = 3; //最大并发量
 //先循环把并发池塞满
-while (pool.length < max) {
+while (pool.length <= max) {
   let url = urls.shift();
   addTask(url);
 }

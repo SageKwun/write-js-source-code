@@ -6,6 +6,7 @@ let request = (url) => {
     }, 1000);
   }).then((res) => {
     console.log("外部逻辑", res);
+    return url;
   });
 };
 
@@ -20,13 +21,19 @@ async function fn(requestFn = () => {}, max = 3, urls = []) {
   if (typeof max !== "number") throw new Error("max should be a number");
   if (!Array.isArray(urls)) throw new Error("urls should be an Array");
 
+  if (urls.length === 0) return;
+
+  let result = urls.length === 1 ? [] : new Array(urls.length);
+  let sign;
+
   let pool = []; //并发池
   for (let i = 0; i < urls.length; i++) {
     let url = urls[i];
     let task = request(url);
-    task.then(() => {
+    task.then((value) => {
       //每当并发池跑完一个任务,从并发池删除个任务
       pool.splice(pool.indexOf(task), 1);
+      result[i] = value;
       console.log(`${url} 结束，当前并发数：${pool.length}`);
     });
     pool.push(task);
@@ -35,7 +42,10 @@ async function fn(requestFn = () => {}, max = 3, urls = []) {
       //跟await结合当有任务完成才让程序继续执行,让循环把并发池塞满
       await Promise.race(pool);
     }
+    sign = Promise.all(pool);
   }
+
+  return sign.then(() => result);
 }
 
 // test
@@ -48,5 +58,7 @@ let urls = [
   "hulu.com",
   "amazon.com",
 ]; // 请求地址
-let max = 3;
-fn(request, max, urls);
+
+(async () => {
+  console.log(await fn(request, 3, urls));
+})();
