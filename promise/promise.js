@@ -237,7 +237,7 @@ class MyPromise {
       }
 
       let count = 0;
-      const result = new Array(length);
+      const result = [];
 
       promiseList.forEach((promise, index) => {
         MyPromise.resolve(promise).then(
@@ -296,7 +296,7 @@ class MyPromise {
 
   static race(promiseList) {
     return new MyPromise((resolve, reject) => {
-      if (!Array.isArray(promiseList) || !promiseList.length) resolve();
+      if (!Array.isArray(promiseList)) reject(new Error());
 
       promiseList.forEach((promise) => {
         MyPromise.resolve(promise).then(resolve, reject);

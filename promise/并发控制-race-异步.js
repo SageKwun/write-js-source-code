@@ -42,6 +42,7 @@ async function fn(requestFn = () => {}, max = 3, urls = []) {
       //跟await结合当有任务完成才让程序继续执行,让循环把并发池塞满
       await Promise.race(pool);
     }
+    // 把 sign 放在外面，避免没到达 max 的情况
     sign = Promise.all(pool);
   }
 
