@@ -209,27 +209,22 @@ class MyPromise {
   }
 
   // resolve 静态方法
-  static resolve(parameter) {
+  static resolve(value) {
     // 如果传入 MyPromise 就直接返回
-    if (parameter instanceof MyPromise) {
-      return parameter;
-    }
+    if (value instanceof MyPromise) return parameter;
 
     // 转成常规方式
-    return new MyPromise((resolve) => {
-      resolve(parameter);
-    });
+    return new MyPromise((resolve) => resolve(parameter));
   }
 
   // reject 静态方法
   static reject(reason) {
-    return new MyPromise((resolve, reject) => {
-      reject(reason);
-    });
+    return new MyPromise((resolve, reject) => reject(reason));
   }
 
   static all(promiseList) {
     return new MyPromise((resolve, reject) => {
+      if (!Array.isArray(promiseList)) return reject(new Error());
       const length = promiseList.length;
 
       if (!length) {
@@ -296,39 +291,41 @@ class MyPromise {
 
   static race(promiseList) {
     return new MyPromise((resolve, reject) => {
-      if (!Array.isArray(promiseList)) reject(new Error());
+      if (!Array.isArray(promiseList)) return reject(new Error());
+      let length = promiseList.length;
+      if (!length) return resolve(promiseList);
 
       promiseList.forEach((promise) => {
-        MyPromise.resolve(promise).then(resolve, reject);
+        promise.then(resolve, reject);
       });
     });
   }
 }
 
-// new MyPromise((resolve, reject) => {
-//   console.log("外部promise");
-//   resolve();
-// })
-//   .then(() => {
-//     console.log("外部第一个then");
-//     new MyPromise((resolve, reject) => {
-//       console.log("内部promise");
-//       resolve();
-//     })
-//       .then(() => {
-//         console.log("内部第一个then");
-//         return Promise.resolve();
-//       })
-//       .then(() => {
-//         console.log("内部第二个then");
-//       });
-//   })
-//   .then(() => {
-//     console.log("外部第二个then");
-//   })
-//   .then(() => {
-//     console.log("外部第三个then");
-//   });
+new MyPromise((resolve, reject) => {
+  console.log("外部promise");
+  resolve();
+})
+  .then(() => {
+    console.log("外部第一个then");
+    new MyPromise((resolve, reject) => {
+      console.log("内部promise");
+      resolve();
+    })
+      .then(() => {
+        console.log("内部第一个then");
+        return Promise.resolve();
+      })
+      .then(() => {
+        console.log("内部第二个then");
+      });
+  })
+  .then(() => {
+    console.log("外部第二个then");
+  })
+  .then(() => {
+    console.log("外部第三个then");
+  });
 
 MyPromise.deferred = function () {
   var result = {};
