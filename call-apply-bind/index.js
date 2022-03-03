@@ -46,13 +46,14 @@ Function.prototype.myBind = function (context, ...args) {
   // 返回的函数
   const newFn = function (...newArgs) {
     // 判断是否作为构造函数使用的绑定函数
+    // 如果是构造函数，此时 new 里面的 this 应该指向新对象，忽略 context
     return fn.apply(this instanceof newFn ? this : context, [
       ...args,
       ...newArgs,
     ]);
   };
 
-  // 继承关系
+  // 如果原函数有继承关系，bind 后的函数也要绑定继承关系
   if (fn.prototype) newFn.prototype = Object.create(fn.prototype);
 
   return newFn;

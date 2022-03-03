@@ -1,15 +1,3 @@
-//自定义请求函数
-let request = (url) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`任务${url}完成`);
-    }, 1000);
-  }).then((res) => {
-    console.log("外部逻辑", res);
-    return url;
-  });
-};
-
 /**
  * @param {function} request 请求方法
  * @param {number} max 最大并发数
@@ -21,9 +9,9 @@ async function fn(requestFn = () => {}, max = 3, urls = []) {
   if (typeof max !== "number") throw new Error("max should be a number");
   if (!Array.isArray(urls)) throw new Error("urls should be an Array");
 
-  if (urls.length === 0) return;
+  if (urls.length === 0) return [];
 
-  let result = urls.length === 1 ? [] : new Array(urls.length);
+  const result = new Array(urls.length);
   let sign;
 
   let pool = []; //并发池
@@ -50,14 +38,26 @@ async function fn(requestFn = () => {}, max = 3, urls = []) {
 }
 
 // test
+//自定义请求函数
+function request(url) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(`任务${url}完成`);
+    }, 1000);
+  }).then((res) => {
+    console.log("外部逻辑", res);
+    return url;
+  });
+}
+
 let urls = [
-  "bytedance.com",
-  "tencent.com",
-  "alibaba.com",
-  "microsoft.com",
-  "apple.com",
-  "hulu.com",
-  "amazon.com",
+  // "bytedance.com",
+  // "tencent.com",
+  // "alibaba.com",
+  // "microsoft.com",
+  // "apple.com",
+  // "hulu.com",
+  // "amazon.com",
 ]; // 请求地址
 
 (async () => {

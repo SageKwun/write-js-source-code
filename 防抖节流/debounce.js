@@ -5,8 +5,11 @@ function debounce(fn, delay, isImmediate) {
   let result;
   // 将debounce处理结果当作函数返回
   return (...args) => {
+    // 立即执行的入口
     if (isImmediate) {
+      // 判断是否需要立即执行
       let callNow = !timer;
+      // 一段时间后清除标记，重置立即执行判断
       setTimeout(() => {
         timer = null;
       }, delay);
