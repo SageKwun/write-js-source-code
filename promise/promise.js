@@ -226,27 +226,17 @@ class MyPromise {
     return new MyPromise((resolve, reject) => {
       if (!Array.isArray(promiseList)) return reject(new Error());
       const length = promiseList.length;
-
-      if (!length) {
-        return resolve(promiseList);
-      }
+      if (!length) return resolve(promiseList);
 
       let count = 0;
-      const result = [];
+      const result = new Array(length);
 
       promiseList.forEach((promise, index) => {
-        MyPromise.resolve(promise).then(
-          (value) => {
-            count++;
-            result[index] = value;
-            if (count === length) {
-              resolve(result);
-            }
-          },
-          (reason) => {
-            reject(reason);
-          }
-        );
+        MyPromise.resolve(promise).then((value) => {
+          count++;
+          result[index] = value;
+          if (count === length) resolve(result);
+        }, reject);
       });
     });
   }

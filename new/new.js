@@ -18,8 +18,7 @@ function createObject(constructor) {
 
   // 若构造函数返回值为对象，直接返回该对象
   // 否则返回obj
-  // ES6: return typeof result === "object" ? result : obj
-  if (typeof result == "object") {
+  if (typeof result == "object" || typeof result === "function") {
     return result;
   }
 

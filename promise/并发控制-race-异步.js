@@ -9,7 +9,7 @@ async function fn(requestFn = () => {}, max = 3, urls = []) {
   if (typeof max !== "number") throw new Error("max should be a number");
   if (!Array.isArray(urls)) throw new Error("urls should be an Array");
 
-  if (urls.length === 0) return [];
+  if (urls.length === 0 || max === 0) return [];
 
   const result = new Array(urls.length);
   let sign;

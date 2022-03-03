@@ -11,18 +11,18 @@
 <body>
     <script type="text/javascript">
         function ajax(method, url, params, loadCallback, errorCallback) {
+            const xhr = new XMLHttpRequest();
             method = method.toUpperCase();
 
-            let xhr = new XMLHttpRequest();
             xhr.onload = loadCallback;
             xhr.onerror = errorCallback;
 
             if (method === "GET") {
-                url = url + "?";
+                url += "?";
                 for (let key in params) {
-                    url += (key + "=" + params[key] + "&")
+                    url += `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}&`;
                 }
-                url = url.slice(0, -1);
+                if (url[url.length - 1] === "&") url = url.slice(0, -1);
             }
 
             xhr.open(method, url);
@@ -30,13 +30,14 @@
             let data;
             if (method === "POST") {
                 data = JSON.stringify(params ?? undefined);
-                xhr.setRequestHeader("Content-Type", "application/json")
+                xhr.setRequestHeader("Content-Type", "application/json");
             }
             xhr.send(data);
         }
 
-        ajax("post", "https://jsonplaceholder.typicode.com/posts", {
-            title: 'foo',
+
+        ajax("get", "https://jsonplaceholder.typicode.com/posts", {
+            title: 'f oo',
             body: 'bar',
             userId: 1,
         }, (e) => console.log(e.currentTarget.responseText));
