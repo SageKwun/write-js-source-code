@@ -2,6 +2,7 @@
 function throttle(fn, interval) {
   // last为上一次触发回调的时间
   let last = 0;
+  let result;
 
   // 将throttle处理结果当作函数返回
   return (...args) => {
@@ -12,7 +13,9 @@ function throttle(fn, interval) {
     if (now - last >= interval) {
       // 如果时间间隔大于我们设定的时间间隔阈值，则执行回调
       last = now;
-      fn.apply(this, args);
+      result = fn.apply(this, args);
     }
+
+    return result;
   };
 }

@@ -10,7 +10,7 @@ var request = (url) => {
 };
 
 function fn(requestFn = () => {}, max = 3, urls = []) {
-  let pool = []; //并发池
+  const pool = []; //并发池
   urls = urls.slice(); // 克隆一份，避免影响原数组
 
   //先循环把并发池塞满
@@ -19,8 +19,8 @@ function fn(requestFn = () => {}, max = 3, urls = []) {
   }
 
   function run() {
-    let url = urls.shift();
-    let task = requestFn(url);
+    const url = urls.shift();
+    const task = requestFn(url);
 
     pool.push(task);
 
@@ -29,9 +29,7 @@ function fn(requestFn = () => {}, max = 3, urls = []) {
       // 请求结束后将该Promise任务从并发池中移除
       pool.splice(pool.indexOf(task), 1);
       // 每当并发池跑完一个任务，就再塞入一个任务
-      if (urls.length > 0) {
-        run();
-      }
+      if (urls.length > 0) run();
     });
   }
 }

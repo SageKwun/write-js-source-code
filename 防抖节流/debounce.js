@@ -4,22 +4,22 @@ function debounce(fn, delay, isImmediate) {
   let timer;
   let result;
   // 将debounce处理结果当作函数返回
+  // 其实就是 clearTimeout 和 res = fn.apply(this, args) 位置互换
   return (...args) => {
     // 立即执行的入口
-    if (isImmediate) {
-      // 判断是否需要立即执行
-      let callNow = !timer;
-      // 一段时间后清除标记，重置立即执行判断
-      setTimeout(() => {
+    if (isImmediate && !timer) {
+      result = fn.apply(this, args);
+      timer = setTimeout(() => {
+        clearTimeout(timer);
         timer = null;
       }, delay);
-      if (callNow) result = fn.apply(this, args);
     } else {
       // 每次事件被触发时，都去清除之前的旧定时器
-      if (timer) clearTimeout(timer);
+      clearTimeout(timer);
       // 设立新定时器
       timer = setTimeout(() => {
         result = fn.apply(this, args);
+        timer = null;
       }, delay);
     }
     return result;
