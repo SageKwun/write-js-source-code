@@ -87,14 +87,10 @@ class MyPromise {
   }
 
   resolvePromise(promise, x, resolve, reject) {
-    if (promise === x) {
-      return reject(new TypeError());
-    }
+    if (promise === x) return reject(new TypeError());
 
     if (typeof x === "object" || typeof x === "function") {
-      if (x === null) {
-        return resolve(x);
-      }
+      if (x === null) return resolve(x);
 
       let then;
       try {
@@ -105,7 +101,6 @@ class MyPromise {
 
       if (typeof then === "function") {
         let called = false;
-
         try {
           then.call(
             x,
@@ -132,45 +127,86 @@ class MyPromise {
     }
   }
 
-  catch(onRejected) {
+  static resolve(value) {
+    if (value instanceof MyPromise) return value;
+
+    return new MyPromise((resolve) => resolve(value));
+  }
+
+  static reject(reason) {
+    return new MyPromise((_, reject) => reject(reason));
+  }
+
+  static catch(onRejected) {
     this.then(undefined, onRejected);
   }
 
-  finally(fn) {
+  static finally(fn) {
     return this.then(
-      (value) => MyPromise.resolve(fn()).then(() => value),
-      (reason) =>
+      (v) => MyPromise.resolve(fn()).then(() => value),
+      (r) =>
         MyPromise.resolve(fn()).then(() => {
-          throw reason;
+          throw error;
         })
     );
   }
 
-  static resolve(value) {
-    if (value instanceof MyPromise) {
-      return value;
-    }
+  static race(promiseList) {
+    return new MyPromise((resolve, reject) => {
+      if (!Array.isArray(promiseList)) return reject(promiseList);
+      const length = promiseList.length;
+      if (length === 0) return resolve(promiseList);
 
-    return new MyPromise((resolve) => {
-      resolve(value);
+      promiseList.forEach((promise) => promise.then(resolve, reject));
     });
   }
 
-  static reject(reason) {
+  static all(promiseList) {
     return new MyPromise((resolve, reject) => {
-      reject(reason);
+      if (!Array.isArray(promiseList)) return reject(new Error());
+      const length = promiseList.length;
+      if (length === 0) return resolve(promiseList);
+
+      let count = 0;
+      const res = new Array(length);
+
+      promiseList.forEach((promise, index) => {
+        promise.then((v) => {
+          res[index] = v;
+          count++;
+          if (count === length) return resolve(res);
+        }, reject);
+      });
     });
   }
 }
 
-MyPromise.deferred = function () {
-  var result = {};
-  result.promise = new MyPromise(function (resolve, reject) {
-    result.resolve = resolve;
-    result.reject = reject;
+debugger;
+new MyPromise((resolve, reject) => {
+  console.log("外部promise");
+  resolve();
+})
+  .then(() => {
+    console.log("外部第一个then");
+    new MyPromise((resolve, reject) => {
+      console.log("内部promise");
+      debugger;
+      resolve();
+    })
+      .then(() => {
+        console.log("内部第一个then");
+        return MyPromise.resolve();
+      })
+      .then(() => {
+        console.log("内部第二个then");
+      });
+  })
+  .then(() => {
+    console.log("外部第二个then");
+  })
+  .then(() => {
+    console.log("外部第三个then");
+  })
+  .then(() => {
+    console.log("外部第四个then");
   });
-
-  return result;
-};
-
-module.exports = MyPromise;

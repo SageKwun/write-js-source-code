@@ -27,9 +27,13 @@ class EventEmitter {
 
   // 移除
   off(eventName, callback) {
-    const callbacks = this.handlers.get(eventName);
-    let index = callbacks.indexOf(callback);
-    if (index !== -1) callbacks.splice(index, 1);
+    if (this.handlers.has(eventName)) {
+      const callbacks = this.handlers.get(eventName);
+      this.handlers.set(
+        eventName,
+        callbacks.filter((c) => c !== callback)
+      );
+    }
   }
 
   // 单次

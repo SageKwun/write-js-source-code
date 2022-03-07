@@ -195,16 +195,11 @@ class MyPromise {
 
   finally(fn) {
     return this.then(
-      (value) => {
-        return MyPromise.resolve(fn()).then(() => {
-          return value;
-        });
-      },
-      (error) => {
-        return MyPromise.resolve(fn()).then(() => {
+      (value) => MyPromise.resolve(fn()).then(() => value),
+      (error) =>
+        MyPromise.resolve(fn()).then(() => {
           throw error;
-        });
-      }
+        })
     );
   }
 
@@ -244,38 +239,31 @@ class MyPromise {
   static allSettled = (promiseList) => {
     return new MyPromise((resolve) => {
       const length = promiseList.length;
+      if (length === 0) return resolve(promiseList);
+
       const result = [];
       let count = 0;
 
-      if (length === 0) {
-        return resolve(result);
-      } else {
-        for (let i = 0; i < length; i++) {
-          const currentPromise = MyPromise.resolve(promiseList[i]);
-          currentPromise.then(
-            (value) => {
-              count++;
-              result[i] = {
-                status: "fulfilled",
-                value: value,
-              };
-              if (count === length) {
-                return resolve(result);
-              }
-            },
-            (reason) => {
-              count++;
-              result[i] = {
-                status: "rejected",
-                reason: reason,
-              };
-              if (count === length) {
-                return resolve(result);
-              }
-            }
-          );
-        }
-      }
+      promiseList.forEach((promise, index) => {
+        MyPromise.resolve(promise).then(
+          (value) => {
+            count++;
+            result[index] = {
+              status: "fulfilled",
+              value,
+            };
+            if (count === length) resolve(result);
+          },
+          (reason) => {
+            count++;
+            result[index] = {
+              status: "rejected",
+              reason,
+            };
+            if (count === length) resolve(result);
+          }
+        );
+      });
     });
   };
 
