@@ -15,10 +15,11 @@ function fn(requestFn = () => {}, max = 3, urls = []) {
 
   //先循环把并发池塞满
   for (let i = 0; i < max; i++) {
-    if (urls.length > 0) run();
+    run();
   }
 
   function run() {
+    if (urls.length <= 0) return;
     const url = urls.shift();
     const task = requestFn(url);
 
@@ -29,7 +30,7 @@ function fn(requestFn = () => {}, max = 3, urls = []) {
       // 请求结束后将该Promise任务从并发池中移除
       pool.splice(pool.indexOf(task), 1);
       // 每当并发池跑完一个任务，就再塞入一个任务
-      if (urls.length > 0) run();
+      run();
     });
   }
 }
